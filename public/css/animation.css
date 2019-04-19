@@ -1,0 +1,83 @@
+/* html, body{
+  height: 100%;
+  width:100%;
+  overflow: hidden;
+  margin: 0;
+} */
+
+
+.mysupercontainer {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mycontainer {
+  height: 100vh;
+  width: 100vw;
+}
+
+h1 {
+  margin-top: 100px;
+  text-align: center;
+}
+#butt {
+  margin-top: 100px;
+  margin-left: 40%;
+  margin-right: 40%;
+  text-align: center;
+  border-style: dashed;
+  background-color: grey;
+}
+
+.grass, .sky, .road{
+  position: relative;
+}
+
+.sky{
+  height: 40%;
+  background: skyblue;
+}
+
+.grass{
+  height: 30%;
+  background: seagreen;
+}
+
+.road{
+  height: 30%;
+  background: grey;
+  box-sizing: border-box;
+  border-top: 10px solid grey;
+  border-bottom: 10px solid grey;
+  width: 100%;
+}
+
+/*// ELEMENTS TO ANIMATE //*/
+.littleman{
+  height: 100%;
+  width : 100%x;
+  /* top: -50px;
+  left: -250px;
+  position: absolute; */
+  animation-name: walk;
+  animation-duration: 5s;
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+}
+
+.codemon{
+  height: 100%;
+  /* position: absolute; */
+  animation-name: walk;
+  animation-duration: 5s;
+  animation-iteration-count: infinite;
+}
+
+/*// KEYFRAMES //*/
+@keyframes walk{
+  from { transform: translateX(-1500px)  }
+    to { transform: translateX(1500px)}
+}

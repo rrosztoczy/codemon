@@ -276,8 +276,7 @@ function renderCaughtCodemonName(monster) {
   caughtName.style.gridArea = "codemon" + monster.caughtOrder + "Name"
 }
 
-
-
+// Start button
 button.addEventListener('click', buttonClick)
 
 function buttonClick(e) {

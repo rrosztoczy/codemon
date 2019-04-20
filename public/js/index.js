@@ -1,40 +1,48 @@
+// Sounds like a monster class with wild/caught parameters, generated from API data
+let monstersFromAPI = []
+, wildMonsters = []
+, caughtMonsters = []
+, selectedMonster = {}
+, caughtCode = []
+, monsterBoundaries = [];
+
+// Adapter for fetches etc.
+let monsterAdapter = adapter('https://floating-bayou-89751.herokuapp.com/');
+
+// DOM Variables
+const quizContainer = document.getElementById('quiz-container')
+, codemonBelt = document.getElementById('codemon-belt')
+, button = document.getElementById('butt');
+
 //Map Border Values
-let topBorder = 51.51175;
-let bottomBorder = 51.50245;
-let rightBorder = -0.15621;
-let leftBorder = -0.18758;
-let borderBuffer = 0.0006
-let monsterAdapter = adapter('https://floating-bayou-89751.herokuapp.com/')
-let monstersFromAPI = [];
-let wildMonsters = [];
-let caughtMonsters = [];
-let selectedMonster = {}
+const topBorder = 51.51175
+, bottomBorder = 51.50245
+, rightBorder = -0.15621
+, leftBorder = -0.18758
+, borderBuffer = 0.0006
+, startLatitude = 51.50789
+, startLongitude = -0.16825;
 
-let caughtCode = [];
-let monsterBoundaries = [];
-const foundPokecount = 0;
-let intersection = false;
-
-let quizContainer = document.getElementById('quiz-container')
-let codemonBelt = document.getElementById('codemon-belt')
-const button = document.getElementById('butt');
-
-
-//Start Point of Game
-let latitude = 51.50789;
-let longitude = -0.16825;
-let center = [latitude, longitude];
-let currentLatitude = center[0]
-let currentLongitude = center[1]
-let map = L.map('map', {drawControl: false, zoomControl: false}).setView(center, 17);
-map.scrollWheelZoom.disable()
+let intersection = false
+, horizontal = 0
+, vertical = 0
+, latitude = () => {
+  return startLatitude + vertical
+} 
+, longitude = () => {
+  return startLongitude + horizontal
+}
+, center = () => {
+   return [latitude(), longitude()] 
+  }
+, map = L.map('map', {drawControl: false, zoomControl: false}).setView(center(), 17);
+map.scrollWheelZoom.disable();
 map.keyboard.disable();
 
 //Global values for our player icon movement event listeners
-let horizontal = 0;
-let vertical = 0;
-let keyCodes = [37, 38, 39, 40]
-let warning = 'No capturing of codemon! Codemon catching is only allowed in this park!';
+
+const keyCodes = [37, 38, 39, 40]
+, warning = 'No capturing of codemon! Codemon catching is only allowed in this park!';
 
 //Player Icon and Attributes
 let myIcon = L.icon({
@@ -42,39 +50,31 @@ let myIcon = L.icon({
     iconSize: [80, 80]
   });
 
-let icon = L.marker(center, {
+let icon = L.marker(center(), {
     autoPan: true,
     autoPanSpeed: 10,
     icon: myIcon,
     zIndexOffset: 1500
   }).addTo(map)
-  // What i probably want to do... store location in a dif variable than the icon, change that
 
-  // TODO: Add these circles for monsters on genereation
-let circle = new L.Circle(center, 35, {color: 'red', display: 'none'}).addTo(map);
+let circle = new L.Circle(center(), 35, {color: 'red', display: 'none'}).addTo(map);
 
 //Building our Map
 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
-// DOM Variables
-
-
-//********************************Game Application Run*************************************/
-
-
-document.addEventListener("keydown", movePlayer);
-
+//-------------------------------------------Application Interaction-------------------------------------------------------------/
 
 //********************************Player Movement Logic*************************************/
+document.addEventListener("keydown", movePlayer);
 
 // Execute movement
 function movePlayer(e) {
   switch (e.keyCode) {
   case 39: playerStep(right)
   break;
-  case 37: playerStep(left)
+  case 37: playerStep(left, left())
   break;
   case 38: playerStep(up)
   break;
@@ -86,43 +86,42 @@ function movePlayer(e) {
 
 // Step direction movement and boundary checks
 function left() {
-  if (leftBorder <= currentLongitude + borderBuffer) {
-    horizontal -= 0.0005;
+  if (leftBorder <= longitude() + borderBuffer) {
+    return horizontal -= 0.0005;
   }
 }
 function right() {
-  if (rightBorder >= currentLongitude - borderBuffer) {
+  if (rightBorder >= longitude() - borderBuffer) {
     horizontal += 0.0005;
   }
 }
 function up() {
-  if (topBorder >= currentLatitude + borderBuffer) {
-    vertical += 0.0005;
+  if (topBorder >= latitude() + borderBuffer) {
+    return vertical += 0.0005;
   }
 }
 function down() {
-  if (bottomBorder <= currentLatitude - borderBuffer) {
-  vertical -= 0.0005;
+  if (bottomBorder <= latitude() - borderBuffer) {
+    return vertical -= 0.0005;
 }
 }
 
 function playerStep(direction) {
+  // Remove current map layer
   map.removeLayer(icon);
   map.removeLayer(circle);
+  // Generate new layer at movement position
   let newIcon;
   let newCircle;
   direction()
-  center = [latitude + vertical, longitude + horizontal];
-  currentLatitude = center[0]
-  currentLongitude = center[1]
-  newIcon = L.marker(center, {
+  newIcon = L.marker(center(), {
     autoPan: true,
     autoPanSpeed: 10,
     icon: myIcon,
     zIndexOffset: 1000
   }).addTo(map)
   icon = newIcon;
-  newCircle = new L.Circle(center, 35, {color: 'red', opacity: 0.001}).addTo(map)
+  newCircle = new L.Circle(center(), 35, {color: 'red', opacity: 0.001}).addTo(map)
   circle = newCircle;
   map.panTo(icon.getLatLng());
 
@@ -141,18 +140,15 @@ function checkIntersection() {
 
 function initiateQuiz(monster) {
   if (monster) {
-      // TODO: initiatePopup(monster)
       renderBattle(monster)
   }
 }
 
 quizContainer.addEventListener('click', function(e){
-  console.log(e.target)
   if (e.target.dataset.correct === "true") {
-    console.log("it's true!")
-    catchMonster(setMonster(e))
+    catchMonster(selectMonster(e))
   } else if (e.target.dataset.correct === "false") {
-    monsterFled(setMonster(e))
+    monsterFled(selectMonster(e))
   }
 })
 
@@ -176,8 +172,6 @@ function renderQuestion(monster) {
   questionBox.style.gridArea = "quizHeader"
 }
 
-
-// TODO: Make sure click listener is on the right element, fix sizing, round edges
 function renderAnswer(answer) {
   const answerBox = document.createElement('div')
   answerBox.className = "answer"
@@ -199,7 +193,6 @@ function renderAnswer(answer) {
 }
 
 function renderBattle(monster) {
-  // extend this to render the battle scene, pause other activity, render question, etc.
   clearQuiz()
   quizContainer.dataset.monstername = monster.name
   renderQuestion(monster)
@@ -207,13 +200,16 @@ function renderBattle(monster) {
 }
 
 // ********************************Interaction Outcome Logic*******************************
-function setMonster(e) {
-  if (e.target.parentNode.parentNode.dataset.monstername) {
-    selectedMonster = wildMonsters.find(monster => monster.name === e.target.parentNode.parentNode.dataset.monstername)
-  } else if (e.target.parentNode.parentNode.parentNode.dataset.monstername) {
-    selectedMonster = wildMonsters.find(monster => monster.name === e.target.parentNode.parentNode.parentNode.dataset.monstername)
-  } else if (e.target.parentNode.parentNode.parentNode.parentNode.parentNode.dataset.monstername) {
-    selectedMonster = wildMonsters.find(monster => monster.name === e.target.parentNode.parentNode.parentNode.parentNode.parentNode.dataset.monstername)
+function selectMonster(e) {
+  let grandparentMonsterName = e.target.parentNode.parentNode.dataset.monstername
+  , greatGrandparentMonsterName = e.target.parentNode.parentNode.parentNode.dataset.monstername
+  , greatGreatGreatGrandparentMonsterName = e.target.parentNode.parentNode.parentNode.parentNode.parentNode.dataset.monstername;
+  if (grandparentMonsterName) {
+    selectedMonster = wildMonsters.find(monster => monster.name === grandparentMonsterName)
+  } else if (greatGrandparentMonsterName) {
+    selectedMonster = wildMonsters.find(monster => monster.name === greatGrandparentMonsterName)
+  } else if (greatGreatGreatGrandparentMonsterName) {
+    selectedMonster = wildMonsters.find(monster => monster.name === greatGreatGreatGrandparentMonsterName)
   }
   return selectedMonster
 }
@@ -222,9 +218,13 @@ function clearQuiz() {
   quizContainer.innerHTML = ""
 }
 
-function monsterFled(monster) {
+function removeMonster(monster) {
   map.removeLayer(monster.monsterBorder);
   map.removeLayer(monster.marker);
+}
+
+function monsterFled(monster) {
+  removeMonster(monster)
   monster.monsterBorder = null
   wildMonsters.splice(wildMonsters.indexOf(monster),1)
   clearQuiz()
@@ -235,8 +235,7 @@ function catchMonster(monster) {
   monster.caughtOrder = caughtCode
   caughtMonsters.push(monster)
   renderCodemonBelt(monster)
-  map.removeLayer(monster.monsterBorder);
-  map.removeLayer(monster.marker);
+  removeMonster(monster)
   monster.monsterBorder = null
   wildMonsters.splice(wildMonsters.indexOf(monster),1)
   clearQuiz()
@@ -286,10 +285,3 @@ function buttonClick(e) {
     document.getElementById('mysupercontainer').innerHTML = '';
   }
 }
-
-//---------------------------helper -------------------
-// function to help us find longitude and latitude on our map
-// function onMapClick(e) {
-//   alert("You clicked the map at " + e.latlng);
-// }
-// map.on('click', onMapClick);
